@@ -25,9 +25,16 @@ class WorkflowMain {
     public static String helpMessage(workflow, params, log) {
         def command = "nextflow run ${workflow.manifest.name} --sample_sheet samplesheet.csv --genome hg38 -profile docker"
         def help_string = ''
-        help_string += NfcoreTemplate.logo(workflow, params.monochrome_logs)
-        help_string += NfcoreSchema.paramsHelp(workflow, params, command)
-        help_string += '\\n' + citation(workflow) + '\\n'
+        help_string += "\\n" + workflow.manifest.name + " v${workflow.manifest.version}\\n"
+        help_string += "Usage: ${command}\\n\\n"
+        help_string += "Mandatory arguments:\\n"
+        help_string += "  --sample_sheet [file]        Path to sample sheet CSV file\\n"
+        help_string += "  --genome [str]                Reference genome (hg38, mm10)\\n\\n"
+        help_string += "Optional arguments:\\n"
+        help_string += "  --outdir [path]               Output directory (default: results)\\n"
+        help_string += "  --spike_in_genome [str]       Spike-in genome for normalization\\n"
+        help_string += "  --help                        Show this help message\\n\\n"
+        help_string += citation(workflow) + '\\n'
         return help_string
     }
 
@@ -36,9 +43,16 @@ class WorkflowMain {
     //
     public static String paramsSummaryLog(workflow, params, log) {
         def summary_log = ''
-        summary_log += NfcoreTemplate.logo(workflow, params.monochrome_logs)
-        summary_log += NfcoreSchema.paramsSummaryLog(workflow, params)
-        summary_log += '\\n' + citation(workflow) + '\\n'
+        summary_log += "\\n" + workflow.manifest.name + " v${workflow.manifest.version}\\n"
+        summary_log += "===================================\\n"
+        summary_log += "Sample sheet    : ${params.sample_sheet}\\n"
+        summary_log += "Genome          : ${params.genome}\\n"
+        summary_log += "Output dir      : ${params.outdir}\\n"
+        if (params.spike_in_genome) {
+            summary_log += "Spike-in genome : ${params.spike_in_genome}\\n"
+        }
+        summary_log += "===================================\\n"
+        summary_log += citation(workflow) + '\\n'
         return summary_log
     }
 
@@ -52,30 +66,14 @@ class WorkflowMain {
             System.exit(0)
         }
 
-        // Validate workflow parameters via the JSON schema
-        if (params.validate_params) {
-            NfcoreSchema.validateParameters(workflow, params, log)
-        }
-
         // Print parameter summary log to screen
         log.info paramsSummaryLog(workflow, params, log)
-
-        // Check that conda channels are set-up correctly
-        if (params.enable_conda) {
-            Utils.checkCondaChannels(log)
-        }
-
-        // Check AWS batch settings
-        NfcoreTemplate.awsBatch(workflow, params)
-
-        // Check the hostnames against configured profiles
-        NfcoreTemplate.hostName(params, log)
     }
 
     //
     // Check resource limits
     //
-    public static def check_max(obj, type) {
+    public static def check_max(obj, type, params) {
         if (type == 'memory') {
             try {
                 if (obj.compareTo(params.max_memory as nextflow.util.MemoryUnit) == 1)
