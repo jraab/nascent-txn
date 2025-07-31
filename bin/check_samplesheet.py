@@ -57,25 +57,16 @@ def check_samplesheet(file_in, file_out):
         if header and header[0].startswith('\ufeff'):
             header[0] = header[0][1:]  # Remove the BOM character
             
-        # Check for TT-seq format first: sample,fastq_1,fastq_2,single_end,strandedness
-        TTSEQ_HEADER = ["sample", "fastq_1", "fastq_2", "single_end", "strandedness"]
-        # Check for diffpolyA format: sample,fastq_1,fastq_2,group
-        DIFFPOLYA_HEADER = ["sample", "fastq_1", "fastq_2", "group"]
+        # Check for basic required columns
+        REQUIRED_COLS = ["sample", "fastq_1"]
+        OPTIONAL_COLS = ["fastq_2", "single_end", "strandedness", "group"]
         
-        if len(header) >= len(TTSEQ_HEADER) and header[:len(TTSEQ_HEADER)] == TTSEQ_HEADER:
-            # TT-seq format
-            use_ttseq_format = True
-            MIN_COLS = 3  # sample, fastq_1, single_end minimum
-        elif len(header) >= len(DIFFPOLYA_HEADER) and header[:len(DIFFPOLYA_HEADER)] == DIFFPOLYA_HEADER:
-            # diffpolyA format - convert to TT-seq format
-            use_ttseq_format = False
-            MIN_COLS = 3  # sample, fastq_1, group minimum
-        else:
-            print("ERROR: Please check samplesheet header -> Expected either:")
-            print("  TT-seq format: {}".format(",".join(TTSEQ_HEADER)))
-            print("  or diffpolyA format: {}".format(",".join(DIFFPOLYA_HEADER)))
-            print("  Got: {}".format(",".join(header)))
-            sys.exit(1)
+        # Validate required columns are present
+        for col in REQUIRED_COLS:
+            if col not in header:
+                print_error("Required column '{}' not found in header!".format(col))
+        
+        MIN_COLS = 2  # sample, fastq_1 minimum
 
         ## Check sample entries
         for line_idx, line in enumerate(fin):
@@ -83,33 +74,39 @@ def check_samplesheet(file_in, file_out):
                 lspl = [x.strip().strip('"') for x in line.strip().split(",")]
 
                 # Check valid number of columns per row
-                min_expected = len(TTSEQ_HEADER) if use_ttseq_format else len(DIFFPOLYA_HEADER)
-                if len(lspl) < min_expected:
+                if len(lspl) < len(header):
                     print_error(
-                        "Invalid number of columns (minimum = {})!".format(min_expected),
+                        "Invalid number of columns (minimum = {})!".format(len(header)),
                         "Line",
                         line,
                     )
 
-                if use_ttseq_format:
-                    ## TT-seq format processing
-                    sample, fastq_1, fastq_2, single_end_str, strandedness = lspl[:5]
-                    
-                    # Validate single_end field
-                    if single_end_str.upper() not in ["TRUE", "FALSE"]:
-                        print_error("single_end must be TRUE or FALSE!", "Line", line)
-                    single_end = single_end_str.upper() == "TRUE"
-                    
-                    # Validate strandedness
+                # Get column indices
+                sample_idx = header.index("sample")
+                fastq_1_idx = header.index("fastq_1")
+                fastq_2_idx = header.index("fastq_2") if "fastq_2" in header else None
+                single_end_idx = header.index("single_end") if "single_end" in header else None
+                strandedness_idx = header.index("strandedness") if "strandedness" in header else None
+                
+                # Extract values
+                sample = lspl[sample_idx]
+                fastq_1 = lspl[fastq_1_idx]
+                fastq_2 = lspl[fastq_2_idx] if fastq_2_idx is not None else ""
+                
+                # Auto-detect single_end or use provided value
+                if single_end_idx is not None and lspl[single_end_idx].strip():
+                    single_end = lspl[single_end_idx].upper() == "TRUE"
+                else:
+                    # Auto-detect: single-end if no fastq_2 or fastq_2 is empty
+                    single_end = not fastq_2.strip()
+                
+                # Get strandedness or use default
+                if strandedness_idx is not None and lspl[strandedness_idx].strip():
+                    strandedness = lspl[strandedness_idx]
                     if strandedness not in ["unstranded", "forward", "reverse"]:
                         print_error("strandedness must be 'unstranded', 'forward', or 'reverse'!", "Line", line)
-                        
                 else:
-                    ## diffpolyA format - convert to TT-seq format
-                    sample, fastq_1, fastq_2, group = lspl[:4]
-                    # Auto-detect single_end and set default strandedness
-                    single_end = not fastq_2.strip()
-                    strandedness = "unstranded"  # Default for converted files
+                    strandedness = "unstranded"  # Default
 
                 ## Common validation
                 sample = sample.replace(" ", "_")
