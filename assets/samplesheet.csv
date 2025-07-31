@@ -1,0 +1,7 @@
+sample,fastq_1,fastq_2,single_end,strandedness
+CONTROL_REP1,/path/to/CONTROL_REP1_R1.fastq.gz,/path/to/CONTROL_REP1_R2.fastq.gz,FALSE,forward
+CONTROL_REP2,/path/to/CONTROL_REP2_R1.fastq.gz,/path/to/CONTROL_REP2_R2.fastq.gz,FALSE,forward
+CONTROL_REP3,/path/to/CONTROL_REP3_R1.fastq.gz,/path/to/CONTROL_REP3_R2.fastq.gz,FALSE,forward
+TREATMENT_REP1,/path/to/TREATMENT_REP1_R1.fastq.gz,/path/to/TREATMENT_REP1_R2.fastq.gz,FALSE,forward
+TREATMENT_REP2,/path/to/TREATMENT_REP2_R1.fastq.gz,/path/to/TREATMENT_REP2_R2.fastq.gz,FALSE,forward
+TREATMENT_REP3,/path/to/TREATMENT_REP3_R1.fastq.gz,/path/to/TREATMENT_REP3_R2.fastq.gz,FALSE,forward
