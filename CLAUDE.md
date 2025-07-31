@@ -126,3 +126,6 @@ nextflow run main.nf --sample_sheet samples.csv --profile hg38
 ## Reference Repositories
 - Source workflow: [crickbabs/DRB_TT-seq](https://github.com/crickbabs/DRB_TT-seq)
 - Structure template: [raab-lab/cut-n-run](https://github.com/raab-lab/cut-n-run)
+
+## Memories
+- Memorize project key aspects for future reference and comprehensive understanding
