@@ -45,8 +45,6 @@ workflow {
     //
     Channel
         .fromPath(params.sample_sheet, checkIfExists: true)
-        .splitCsv(header:true, sep:',')
-        .map { create_fastq_channel(it) }
         .set { ch_samplesheet }
 
     //
