@@ -29,6 +29,7 @@ WorkflowMain.initialise(workflow, params, log)
 */
 
 include { TTSEQ } from './subworkflows/ttseq'
+include { TTSEQ_DEBUG } from './subworkflows/ttseq_debug'
 
 //
 // WORKFLOW: Run main TT-seq analysis workflow
@@ -50,9 +51,15 @@ workflow {
     //
     // WORKFLOW: Run pipeline
     //
-    TTSEQ (
-        ch_samplesheet
-    )
+    if (params.debug_mode) {
+        TTSEQ_DEBUG (
+            ch_samplesheet
+        )
+    } else {
+        TTSEQ (
+            ch_samplesheet
+        )
+    }
 }
 
 /*
